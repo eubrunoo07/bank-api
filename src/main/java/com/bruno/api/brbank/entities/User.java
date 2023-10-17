@@ -2,9 +2,6 @@ package com.bruno.api.brbank.entities;
 
 import com.bruno.api.brbank.enums.UserType;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 

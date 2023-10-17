@@ -6,19 +6,19 @@ import com.bruno.api.brbank.entities.User;
 import com.bruno.api.brbank.enums.UserType;
 import com.bruno.api.brbank.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
-import lombok.Data;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/bank/users")
@@ -27,24 +27,28 @@ public class UserController {
     @Autowired
     private UserService service;
 
+    @Operation(summary = "Realizar o registro de um usuário")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Registro desse usuário ocorreu com sucesso"),
+            @ApiResponse(responseCode = "422", description = "Dados de requisição inválidos"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro ao realizar o registro deste usuário"),
+    })
     @PostMapping
     public ResponseEntity<?> create(@RequestBody @Valid UserDTO dto){
-        if(!dto.getName().matches("[A-Z][a-z].* [A-Z][a-z].*")){
-            throw new IllegalArgumentException("The name must contain at least the first and middle name");
-        }
-        if(service.existsByCpfOrEmail(dto.getCpf(), dto.getEmail())){
-            throw new IllegalArgumentException("This email or CPF already has an associated record");
-        }
-        if(dto.getBalance() == null){
-            dto.setBalance(BigDecimal.valueOf(0));
-        }
-        if(!dto.getUserType().equals("COMMON_USER") && !dto.getUserType().equals("MERCHANT")){
-            throw new IllegalArgumentException("This type of user does not exist");
-        }
+        dto.setUserType(dto.getUserType().toUpperCase());
+        validDtoToSave(dto);
         service.save(dtoToEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body("User created successfully");
     }
 
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Transferência realizada com sucesso"),
+            @ApiResponse(responseCode = "422", description = "Dados de requisição inválidos"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro ao fazer a transação"),
+    })
+    @Operation(summary = "Realizar uma transferência para um usuário")
     @PostMapping("/transfer")
     public ResponseEntity<?> transferMethod(@RequestBody @Valid TransferRequest transferRequest){
         User sender = service.findById(transferRequest.getSenderId()).orElseThrow(() -> new IllegalArgumentException("This sender ID does not exist in our system"));
@@ -57,9 +61,30 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body("Transfer completed successfully");
     }
 
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Atualização desse usuário ocorreu com sucesso"),
+            @ApiResponse(responseCode = "422", description = "Dados de requisição inválidos"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro ao atualizar os dados deste usuário"),
+    })
+    @Operation(summary = "Realizar uma atualização nos dados de um usuário")
     @PutMapping("/{id}")
     public ResponseEntity<Object> update(@RequestBody@Valid UserDTO dto, @PathVariable Long id){
+        dto.setUserType(dto.getUserType().toUpperCase());
         User user = service.findById(id).orElseThrow(() -> new IllegalArgumentException("User not exists"));
+        if(!Objects.equals(UserType.COMMON_USER.toString(), dto.getUserType()) && !Objects.equals(UserType.MERCHANT.toString(), dto.getUserType())){
+            System.out.println("caiu");
+            throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or USER_COMMON");
+        }
+        if(!dto.getName().matches("[A-Z][a-z].* [A-Z][a-z].*")){
+            throw new IllegalArgumentException("The name must contain at least the first and middle name");
+        }
+        if(dto.getBalance() == null){
+            dto.setBalance(BigDecimal.valueOf(0));
+        }
+        if(dto.getBalance().doubleValue() < 0){
+            throw new IllegalArgumentException("You cannot have a negative amount on your balance");
+        }
         if(service.existsByEmail(user.getEmail()) && service.existsByCpf(user.getCpf())){
             if(service.findByEmail(dto.getEmail()).get().getId() == user.getId() && service.findByCpf(dto.getCpf()).get().getId() == user.getId()){
                 User updatedUser = new User();
@@ -76,6 +101,13 @@ public class UserController {
         return null;
     }
 
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Deleção desse usuário ocorreu com sucesso"),
+            @ApiResponse(responseCode = "422", description = "Dados de requisição inválidos"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro ao deletar este usuário"),
+    })
+    @Operation(summary = "Realizar a deleção de um usuário")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id){
         User user = service.findById(id).orElseThrow(() -> new IllegalArgumentException("User not exists"));
@@ -83,12 +115,26 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body("User deleted successfully");
     }
 
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Busca realizada com sucesso"),
+            @ApiResponse(responseCode = "422", description = "Dados de requisição inválidos"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro ao buscar este usuário"),
+    })
+    @Operation(summary = "Realizar a busca de todos os usuário")
     @GetMapping("/")
     @ResponseStatus(HttpStatus.OK)
     public List<User> allUsers(){
         return service.findAll();
     }
 
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Busca realizada com sucesso"),
+            @ApiResponse(responseCode = "422", description = "Dados de requisição inválidos"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro ao buscar este usuário"),
+    })
+    @Operation(summary = "Realizar a busca de um usuário por ID")
     @GetMapping("/{id}")
     public User getById(@PathVariable Long id){
         return service.findById(id).orElseThrow(() -> new IllegalArgumentException("User not exists"));
@@ -107,6 +153,25 @@ public class UserController {
         dto.setId(user.getId());
         dto.setUserType(user.getType().toString());
         return dto;
+    }
+
+    private void validDtoToSave(UserDTO dto) {
+        if(!Objects.equals(UserType.COMMON_USER.toString(), dto.getUserType()) && !Objects.equals(UserType.MERCHANT.toString(), dto.getUserType())){
+            System.out.println("caiu");
+            throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or COMMON_USER");
+        }
+        if(!dto.getName().matches("[A-Z][a-z].* [A-Z][a-z].*")){
+            throw new IllegalArgumentException("The name must contain at least the first and middle name");
+        }
+        if(service.existsByCpfOrEmail(dto.getCpf(), dto.getEmail())){
+            throw new IllegalArgumentException("This email or CPF already has an associated record");
+        }
+        if(dto.getBalance() == null){
+            dto.setBalance(BigDecimal.valueOf(0));
+        }
+        if(dto.getBalance().doubleValue() < 0){
+            throw new IllegalArgumentException("You cannot have a negative amount on your balance");
+        }
     }
 
     private static void validTransferRequest(TransferRequest transferRequest, User sender) {

@@ -1,15 +1,10 @@
 package com.bruno.api.brbank.dtos;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
-import lombok.Data;
 import org.hibernate.validator.constraints.br.CPF;
 
 import java.math.BigDecimal;
@@ -17,6 +12,7 @@ import java.math.BigDecimal;
 @JsonPropertyOrder({"key", "name", "cpf", "email", "password", "userType"})
 public class UserDTO {
     @JsonProperty("key")
+    @JsonIgnore
     private Long id;
     @NotBlank(message = "Name cannot be null or empty")
     private String name;
@@ -29,6 +25,7 @@ public class UserDTO {
     @NotBlank(message = "Password cannot be null or empty")
     private String password;
     private BigDecimal balance;
+    @NotBlank(message = "User type cannot be null or empty")
     private String userType;
 
     public UserDTO(Long id, String name, String cpf, String email, String password, BigDecimal balance, String userType) {
