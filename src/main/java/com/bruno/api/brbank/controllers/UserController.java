@@ -86,7 +86,14 @@ public class UserController {
             throw new IllegalArgumentException("You cannot have a negative amount on your balance");
         }
         if(service.existsByEmail(user.getEmail()) && service.existsByCpf(user.getCpf())){
-            if(service.findByEmail(dto.getEmail()).get().getId() == user.getId() && service.findByCpf(dto.getCpf()).get().getId() == user.getId()){
+            if(service.existsByEmail(user.getEmail()) && service.existsByCpf(user.getCpf())){
+                User emailFoundedByEmail = service.findByEmail(dto.getEmail()).orElse(new User());
+                User emailFoundedByCpf = service.findByCpf(dto.getCpf()).orElse(new User());
+
+                if (emailFoundedByEmail.getId() == null && emailFoundedByCpf.getId() == null) {
+                    throw new IllegalArgumentException("This email or CPF already has an associated record");
+                }
+
                 User updatedUser = new User();
                 BeanUtils.copyProperties(dto, updatedUser);
                 updatedUser.setId(user.getId());

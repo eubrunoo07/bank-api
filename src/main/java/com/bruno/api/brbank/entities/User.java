@@ -22,7 +22,7 @@ public class User {
     private String password;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserType type;
+    private UserType userType;
 
     public User(Long id, String name, String cpf, String email, String password, UserType type, BigDecimal balance) {
         this.id = id;
@@ -30,7 +30,7 @@ public class User {
         this.cpf = cpf;
         this.email = email;
         this.password = password;
-        this.type = type;
+        this.userType = type;
         this.balance = balance;
     }
 
@@ -90,10 +90,10 @@ public class User {
     }
 
     public UserType getType() {
-        return type;
+        return userType;
     }
 
     public void setType(UserType type) {
-        this.type = type;
+        this.userType = type;
     }
 }
