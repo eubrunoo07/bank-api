@@ -2,12 +2,18 @@ package com.bruno.api.brbank.entities;
 
 import com.bruno.api.brbank.enums.UserType;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 @Entity
 @Table(name = "user_tb")
-public class User {
+@Getter@Setter
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,15 +28,16 @@ public class User {
     private String password;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserType userType;
-
-    public User(Long id, String name, String cpf, String email, String password, UserType type, BigDecimal balance) {
+    private UserType role;
+    @Column
+    private BigDecimal balance;
+    public User(Long id, String name, String cpf, String email, String password, UserType role, BigDecimal balance) {
         this.id = id;
         this.name = name;
         this.cpf = cpf;
         this.email = email;
         this.password = password;
-        this.userType = type;
+        this.role = role;
         this.balance = balance;
     }
 
@@ -38,62 +45,33 @@ public class User {
 
     }
 
-    public BigDecimal getBalance() {
-        return balance;
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return null;
     }
 
-    public void setBalance(BigDecimal balance) {
-        this.balance = balance;
+    @Override
+    public String getUsername() {
+        return null;
     }
 
-    @Column
-    private BigDecimal balance;
-
-    public Long getId() {
-        return id;
+    @Override
+    public boolean isAccountNonExpired() {
+        return false;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    @Override
+    public boolean isAccountNonLocked() {
+        return false;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return false;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getCpf() {
-        return cpf;
-    }
-
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public UserType getType() {
-        return userType;
-    }
-
-    public void setType(UserType type) {
-        this.userType = type;
+    @Override
+    public boolean isEnabled() {
+        return false;
     }
 }

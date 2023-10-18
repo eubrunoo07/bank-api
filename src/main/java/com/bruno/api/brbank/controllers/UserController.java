@@ -36,7 +36,7 @@ public class UserController {
     })
     @PostMapping
     public ResponseEntity<?> create(@RequestBody @Valid UserDTO dto){
-        dto.setUserType(dto.getUserType().toUpperCase());
+        dto.setRole(dto.getRole().toUpperCase());
         validDtoToSave(dto);
         service.save(dtoToEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body("User created successfully");
@@ -70,9 +70,9 @@ public class UserController {
     @Operation(summary = "Realizar uma atualização nos dados de um usuário")
     @PutMapping("/{id}")
     public ResponseEntity<Object> update(@RequestBody@Valid UserDTO dto, @PathVariable Long id){
-        dto.setUserType(dto.getUserType().toUpperCase());
+        dto.setRole(dto.getRole().toUpperCase());
         User user = service.findById(id).orElseThrow(() -> new IllegalArgumentException("User not exists"));
-        if(!Objects.equals(UserType.COMMON_USER.toString(), dto.getUserType()) && !Objects.equals(UserType.MERCHANT.toString(), dto.getUserType())){
+        if(!Objects.equals(UserType.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserType.MERCHANT.toString(), dto.getRole())){
             System.out.println("caiu");
             throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or USER_COMMON");
         }
@@ -97,7 +97,7 @@ public class UserController {
                 User updatedUser = new User();
                 BeanUtils.copyProperties(dto, updatedUser);
                 updatedUser.setId(user.getId());
-                updatedUser.setType(UserType.valueOf(dto.getUserType()));
+                updatedUser.setRole(UserType.valueOf(dto.getRole()));
                 service.save(updatedUser);
                 return ResponseEntity.status(HttpStatus.OK).body("User updated successfully");
             }
@@ -150,7 +150,7 @@ public class UserController {
     private User dtoToEntity(UserDTO dto){
         User user = new User();
         BeanUtils.copyProperties(dto, user);
-        user.setType(UserType.valueOf(dto.getUserType()));
+        user.setRole(UserType.valueOf(dto.getRole()));
         return user;
     }
 
@@ -158,12 +158,12 @@ public class UserController {
         UserDTO dto = new UserDTO();
         BeanUtils.copyProperties(user, dto);
         dto.setId(user.getId());
-        dto.setUserType(user.getType().toString());
+        dto.setRole(user.getRole().toString());
         return dto;
     }
 
     private void validDtoToSave(UserDTO dto) {
-        if(!Objects.equals(UserType.COMMON_USER.toString(), dto.getUserType()) && !Objects.equals(UserType.MERCHANT.toString(), dto.getUserType())){
+        if(!Objects.equals(UserType.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserType.MERCHANT.toString(), dto.getRole())){
             System.out.println("caiu");
             throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or COMMON_USER");
         }
@@ -191,7 +191,7 @@ public class UserController {
         if(transferRequest.getValue().doubleValue() < 0){
             throw new IllegalArgumentException("Transactions with negative amounts are not permitted");
         }
-        if(sender.getType().toString().equals("MERCHANT")){
+        if(sender.getRole().toString().equals("MERCHANT")){
             throw new IllegalArgumentException("Merchant cannot send money");
         }
         if(transferRequest.getRecipient() == transferRequest.getSenderId()){
