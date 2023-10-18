@@ -3,9 +3,8 @@ package com.bruno.api.brbank.controllers;
 import com.bruno.api.brbank.dtos.TransferRequest;
 import com.bruno.api.brbank.dtos.UserDTO;
 import com.bruno.api.brbank.entities.User;
-import com.bruno.api.brbank.enums.UserType;
+import com.bruno.api.brbank.enums.UserRole;
 import com.bruno.api.brbank.services.UserService;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,11 +13,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-import javax.print.DocFlavor;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +29,7 @@ class UserControllerTest {
     public static final String CPF = "13711695000";
     public static final String EMAIL = "bruno@gmail.com";
     public static final String PASSWORD = "12345";
-    public static final UserType USER_TYPE = UserType.COMMON_USER;
+    public static final UserRole USER_TYPE = UserRole.COMMON_USER;
     public static final BigDecimal BALANCE = BigDecimal.valueOf(100);
 
     @InjectMocks
@@ -61,14 +57,14 @@ class UserControllerTest {
     void whenTransferThenReturnSuccess() {
         User sender = new User();
         BeanUtils.copyProperties(user, sender);
-        sender.setType(UserType.COMMON_USER);
+        sender.setType(UserRole.COMMON_USER);
 
         User recipient = new User();
         recipient.setName("Wallace Silva");
         recipient.setCpf("45597409093");
         recipient.setEmail("wallace@gmail.com");
         recipient.setPassword("1234");
-        recipient.setType(UserType.COMMON_USER);
+        recipient.setType(UserRole.COMMON_USER);
         recipient.setBalance(BigDecimal.valueOf(0));
         recipient.setId(2L);
 
@@ -90,7 +86,7 @@ class UserControllerTest {
     void whenTransferThenReturnAnErrorBecauseInsufficientBalance(){
         User sender = new User();
         BeanUtils.copyProperties(user, sender);
-        sender.setType(UserType.COMMON_USER);
+        sender.setType(UserRole.COMMON_USER);
         sender.setBalance(BigDecimal.valueOf(10));
 
         User recipient = new User();
@@ -98,7 +94,7 @@ class UserControllerTest {
         recipient.setCpf("45597409093");
         recipient.setEmail("wallace@gmail.com");
         recipient.setPassword("1234");
-        recipient.setType(UserType.COMMON_USER);
+        recipient.setType(UserRole.COMMON_USER);
         recipient.setBalance(BigDecimal.valueOf(0));
         recipient.setId(2L);
 
@@ -129,7 +125,7 @@ class UserControllerTest {
         assertEquals(dto.getName(), user.getName());
         assertEquals(dto.getEmail(), user.getEmail());
         assertEquals(dto.getCpf(), user.getCpf());
-        assertEquals(UserType.COMMON_USER, user.getType());
+        assertEquals(UserRole.COMMON_USER, user.getType());
     }
 
     @Test

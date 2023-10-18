@@ -2,7 +2,7 @@ package com.bruno.api.brbank.services.impl;
 
 import com.bruno.api.brbank.dtos.UserDTO;
 import com.bruno.api.brbank.entities.User;
-import com.bruno.api.brbank.enums.UserType;
+import com.bruno.api.brbank.enums.UserRole;
 import com.bruno.api.brbank.repositories.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +18,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
 class UserServiceImplTest {
 
@@ -28,7 +26,7 @@ class UserServiceImplTest {
     public static final String CPF = "13711695000";
     public static final String EMAIL = "bruno@gmail.com";
     public static final String PASSWORD = "12345";
-    public static final UserType USER_TYPE = UserType.COMMON_USER;
+    public static final UserRole USER_TYPE = UserRole.COMMON_USER;
     public static final BigDecimal BALANCE = BigDecimal.valueOf(100);
     @InjectMocks
     private UserServiceImpl service;

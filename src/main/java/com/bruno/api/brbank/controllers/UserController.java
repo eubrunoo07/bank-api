@@ -3,7 +3,7 @@ package com.bruno.api.brbank.controllers;
 import com.bruno.api.brbank.dtos.TransferRequest;
 import com.bruno.api.brbank.dtos.UserDTO;
 import com.bruno.api.brbank.entities.User;
-import com.bruno.api.brbank.enums.UserType;
+import com.bruno.api.brbank.enums.UserRole;
 import com.bruno.api.brbank.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -72,7 +71,7 @@ public class UserController {
     public ResponseEntity<Object> update(@RequestBody@Valid UserDTO dto, @PathVariable Long id){
         dto.setRole(dto.getRole().toUpperCase());
         User user = service.findById(id).orElseThrow(() -> new IllegalArgumentException("User not exists"));
-        if(!Objects.equals(UserType.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserType.MERCHANT.toString(), dto.getRole())){
+        if(!Objects.equals(UserRole.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserRole.MERCHANT.toString(), dto.getRole())){
             System.out.println("caiu");
             throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or USER_COMMON");
         }
@@ -97,7 +96,7 @@ public class UserController {
                 User updatedUser = new User();
                 BeanUtils.copyProperties(dto, updatedUser);
                 updatedUser.setId(user.getId());
-                updatedUser.setRole(UserType.valueOf(dto.getRole()));
+                updatedUser.setRole(UserRole.valueOf(dto.getRole()));
                 service.save(updatedUser);
                 return ResponseEntity.status(HttpStatus.OK).body("User updated successfully");
             }
@@ -150,7 +149,7 @@ public class UserController {
     private User dtoToEntity(UserDTO dto){
         User user = new User();
         BeanUtils.copyProperties(dto, user);
-        user.setRole(UserType.valueOf(dto.getRole()));
+        user.setRole(UserRole.valueOf(dto.getRole()));
         return user;
     }
 
@@ -163,7 +162,7 @@ public class UserController {
     }
 
     private void validDtoToSave(UserDTO dto) {
-        if(!Objects.equals(UserType.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserType.MERCHANT.toString(), dto.getRole())){
+        if(!Objects.equals(UserRole.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserRole.MERCHANT.toString(), dto.getRole())){
             System.out.println("caiu");
             throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or COMMON_USER");
         }

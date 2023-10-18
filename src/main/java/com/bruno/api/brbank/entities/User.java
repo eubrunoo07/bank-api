@@ -1,14 +1,16 @@
 package com.bruno.api.brbank.entities;
 
-import com.bruno.api.brbank.enums.UserType;
+import com.bruno.api.brbank.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.List;
 
 @Entity
 @Table(name = "user_tb")
@@ -28,10 +30,10 @@ public class User implements UserDetails {
     private String password;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserType role;
+    private UserRole role;
     @Column
     private BigDecimal balance;
-    public User(Long id, String name, String cpf, String email, String password, UserType role, BigDecimal balance) {
+    public User(Long id, String name, String cpf, String email, String password, UserRole role, BigDecimal balance) {
         this.id = id;
         this.name = name;
         this.cpf = cpf;
@@ -47,31 +49,32 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        if(this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
+        else return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override
     public String getUsername() {
-        return null;
+        return email;
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return false;
+        return true;
     }
 }
