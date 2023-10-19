@@ -1,5 +1,6 @@
 package com.bruno.api.brbank.controllers;
 
+import com.bruno.api.brbank.dtos.AuthenticationDTO;
 import com.bruno.api.brbank.dtos.TransferRequest;
 import com.bruno.api.brbank.dtos.UserDTO;
 import com.bruno.api.brbank.entities.User;
@@ -13,6 +14,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -24,6 +28,8 @@ import java.util.Objects;
 @CrossOrigin(value = "*")
 public class UserController {
     @Autowired
+    private AuthenticationManager authManager;
+    @Autowired
     private UserService service;
 
     @Operation(summary = "Realizar o registro de um usuário")
@@ -33,12 +39,21 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Parâmetros inválidos"),
             @ApiResponse(responseCode = "500", description = "Erro ao realizar o registro deste usuário"),
     })
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<?> create(@RequestBody @Valid UserDTO dto){
+        String encryptedPassword = new BCryptPasswordEncoder().encode(dto.getPassword());
         dto.setRole(dto.getRole().toUpperCase());
+        dto.setPassword(encryptedPassword);
         validDtoToSave(dto);
         service.save(dtoToEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body("User created successfully");
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody @Valid AuthenticationDTO authenticationDTO){
+        var usernamePassword = new UsernamePasswordAuthenticationToken(authenticationDTO.getLogin(), authenticationDTO.getPassword());
+        var auth = this.authManager.authenticate(usernamePassword);
+        return ResponseEntity.status(HttpStatus.OK).body("User logged in successfully");
     }
 
     @ApiResponses(value = {
@@ -153,18 +168,9 @@ public class UserController {
         return user;
     }
 
-    private UserDTO entityToDto(User user){
-        UserDTO dto = new UserDTO();
-        BeanUtils.copyProperties(user, dto);
-        dto.setId(user.getId());
-        dto.setRole(user.getRole().toString());
-        return dto;
-    }
-
     private void validDtoToSave(UserDTO dto) {
-        if(!Objects.equals(UserRole.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserRole.MERCHANT.toString(), dto.getRole())){
-            System.out.println("caiu");
-            throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or COMMON_USER");
+        if(!Objects.equals(UserRole.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserRole.MERCHANT.toString(), dto.getRole()) && !Objects.equals(UserRole.ADMIN.toString(), dto.getRole())){
+            throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT, COMMON_USER or ADMIN");
         }
         if(!dto.getName().matches("[A-Z][a-z].* [A-Z][a-z].*")){
             throw new IllegalArgumentException("The name must contain at least the first and middle name");
