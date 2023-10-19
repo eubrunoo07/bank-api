@@ -1,19 +1,26 @@
 package com.bruno.api.brbank.services.impl;
 
+import com.bruno.api.brbank.dtos.TransferRequest;
+import com.bruno.api.brbank.dtos.UserDTO;
 import com.bruno.api.brbank.entities.User;
+import com.bruno.api.brbank.enums.UserRole;
 import com.bruno.api.brbank.repositories.UserRepository;
 import com.bruno.api.brbank.services.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository repository;
+    private final UserRepository repository;
 
     @Override
     public User save(User user) {
@@ -63,5 +70,67 @@ public class UserServiceImpl implements UserService {
     @Override
     public void delete(User user) {
         repository.delete(user);
+    }
+
+    @Override
+    public User dtoToEntity(UserDTO dto){
+        User user = new User();
+        BeanUtils.copyProperties(dto, user);
+        user.setRole(UserRole.valueOf(dto.getRole()));
+        return user;
+    }
+
+    @Override
+    public void validDtoToSave(UserDTO dto) {
+        if(!Objects.equals(UserRole.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserRole.MERCHANT.toString(), dto.getRole()) && !Objects.equals(UserRole.ADMIN.toString(), dto.getRole())){
+            throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT, COMMON_USER or ADMIN");
+        }
+        if(!dto.getName().matches("[A-Z][a-z].* [A-Z][a-z].*")){
+            throw new IllegalArgumentException("The name must contain at least the first and middle name");
+        }
+        if(repository.existsByCpfOrEmail(dto.getCpf(), dto.getEmail())){
+            throw new IllegalArgumentException("This email or CPF already has an associated record");
+        }
+        if(dto.getBalance() == null){
+            dto.setBalance(BigDecimal.valueOf(0));
+        }
+        if(dto.getBalance().doubleValue() < 0){
+            throw new IllegalArgumentException("You cannot have a negative amount on your balance");
+        }
+    }
+
+    @Override
+    public void validTransferRequest(TransferRequest transferRequest, User sender) {
+        if(sender.getBalance().doubleValue() < transferRequest.getValue().doubleValue()){
+            throw new IllegalArgumentException("Not enough balance for the transfer");
+        }
+        if(transferRequest.getValue().doubleValue() == 0){
+            throw new IllegalArgumentException("The transfer amount cannot be 0");
+        }
+        if(transferRequest.getValue().doubleValue() < 0){
+            throw new IllegalArgumentException("Transactions with negative amounts are not permitted");
+        }
+        if(sender.getRole().toString().equals("MERCHANT")){
+            throw new IllegalArgumentException("Merchant cannot send money");
+        }
+        if(Objects.equals(transferRequest.getRecipient(), transferRequest.getSenderId())){
+            throw new IllegalArgumentException("It is not allowed to make a transaction for yourself");
+        }
+    }
+
+    @Override
+    public void updateValidation(UserDTO dto) {
+        if(!Objects.equals(UserRole.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserRole.MERCHANT.toString(), dto.getRole())){
+            throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or USER_COMMON");
+        }
+        if(!dto.getName().matches("[A-Z][a-z].* [A-Z][a-z].*")){
+            throw new IllegalArgumentException("The name must contain at least the first and middle name");
+        }
+        if(dto.getBalance() == null){
+            dto.setBalance(BigDecimal.valueOf(0));
+        }
+        if(dto.getBalance().doubleValue() < 0){
+            throw new IllegalArgumentException("You cannot have a negative amount on your balance");
+        }
     }
 }

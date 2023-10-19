@@ -10,8 +10,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,18 +19,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/bank/users")
 @CrossOrigin(value = "*")
+@RequiredArgsConstructor
 public class UserController {
-    @Autowired
-    private AuthenticationManager authManager;
-    @Autowired
-    private UserService service;
+    private final AuthenticationManager authManager;
+    private final UserService service;
 
     @Operation(summary = "Realizar o registro de um usuário")
     @ApiResponses(value = {
@@ -44,8 +41,8 @@ public class UserController {
         String encryptedPassword = new BCryptPasswordEncoder().encode(dto.getPassword());
         dto.setRole(dto.getRole().toUpperCase());
         dto.setPassword(encryptedPassword);
-        validDtoToSave(dto);
-        service.save(dtoToEntity(dto));
+        service.validDtoToSave(dto);
+        service.save(service.dtoToEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body("User created successfully");
     }
 
@@ -67,7 +64,7 @@ public class UserController {
     public ResponseEntity<?> transferMethod(@RequestBody @Valid TransferRequest transferRequest){
         User sender = service.findById(transferRequest.getSenderId()).orElseThrow(() -> new IllegalArgumentException("This sender ID does not exist in our system"));
         User recipient = service.findById(transferRequest.getRecipient()).orElseThrow(() -> new IllegalArgumentException("This recipient ID does not exist in our system"));
-        validTransferRequest(transferRequest, sender);
+        service.validTransferRequest(transferRequest, sender);
         sender.setBalance(sender.getBalance().subtract(transferRequest.getValue()));
         recipient.setBalance(recipient.getBalance().add(transferRequest.getValue()));
         service.save(sender);
@@ -83,22 +80,10 @@ public class UserController {
     })
     @Operation(summary = "Realizar uma atualização nos dados de um usuário")
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@RequestBody@Valid UserDTO dto, @PathVariable Long id){
+    public void update(@RequestBody@Valid UserDTO dto, @PathVariable Long id){
         dto.setRole(dto.getRole().toUpperCase());
         User user = service.findById(id).orElseThrow(() -> new IllegalArgumentException("User not exists"));
-        if(!Objects.equals(UserRole.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserRole.MERCHANT.toString(), dto.getRole())){
-            System.out.println("caiu");
-            throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or USER_COMMON");
-        }
-        if(!dto.getName().matches("[A-Z][a-z].* [A-Z][a-z].*")){
-            throw new IllegalArgumentException("The name must contain at least the first and middle name");
-        }
-        if(dto.getBalance() == null){
-            dto.setBalance(BigDecimal.valueOf(0));
-        }
-        if(dto.getBalance().doubleValue() < 0){
-            throw new IllegalArgumentException("You cannot have a negative amount on your balance");
-        }
+        service.updateValidation(dto);
         if(service.existsByEmail(user.getEmail()) && service.existsByCpf(user.getCpf())){
             if(service.existsByEmail(user.getEmail()) && service.existsByCpf(user.getCpf())){
                 User emailFoundedByEmail = service.findByEmail(dto.getEmail()).orElse(new User());
@@ -113,13 +98,12 @@ public class UserController {
                 updatedUser.setId(user.getId());
                 updatedUser.setRole(UserRole.valueOf(dto.getRole()));
                 service.save(updatedUser);
-                return ResponseEntity.status(HttpStatus.OK).body("User updated successfully");
+                ResponseEntity.status(HttpStatus.OK).body("User updated successfully");
             }
             else{
                 throw new IllegalArgumentException("This email or CPF already has an associated record");
             }
         }
-        return null;
     }
 
     @ApiResponses(value = {
@@ -159,49 +143,6 @@ public class UserController {
     @GetMapping("/{id}")
     public User getById(@PathVariable Long id){
         return service.findById(id).orElseThrow(() -> new IllegalArgumentException("User not exists"));
-    }
-
-    private User dtoToEntity(UserDTO dto){
-        User user = new User();
-        BeanUtils.copyProperties(dto, user);
-        user.setRole(UserRole.valueOf(dto.getRole()));
-        return user;
-    }
-
-    private void validDtoToSave(UserDTO dto) {
-        if(!Objects.equals(UserRole.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserRole.MERCHANT.toString(), dto.getRole()) && !Objects.equals(UserRole.ADMIN.toString(), dto.getRole())){
-            throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT, COMMON_USER or ADMIN");
-        }
-        if(!dto.getName().matches("[A-Z][a-z].* [A-Z][a-z].*")){
-            throw new IllegalArgumentException("The name must contain at least the first and middle name");
-        }
-        if(service.existsByCpfOrEmail(dto.getCpf(), dto.getEmail())){
-            throw new IllegalArgumentException("This email or CPF already has an associated record");
-        }
-        if(dto.getBalance() == null){
-            dto.setBalance(BigDecimal.valueOf(0));
-        }
-        if(dto.getBalance().doubleValue() < 0){
-            throw new IllegalArgumentException("You cannot have a negative amount on your balance");
-        }
-    }
-
-    private static void validTransferRequest(TransferRequest transferRequest, User sender) {
-        if(sender.getBalance().doubleValue() < transferRequest.getValue().doubleValue()){
-            throw new IllegalArgumentException("Not enough balance for the transfer");
-        }
-        if(transferRequest.getValue().doubleValue() == 0){
-            throw new IllegalArgumentException("The transfer amount cannot be 0");
-        }
-        if(transferRequest.getValue().doubleValue() < 0){
-            throw new IllegalArgumentException("Transactions with negative amounts are not permitted");
-        }
-        if(sender.getRole().toString().equals("MERCHANT")){
-            throw new IllegalArgumentException("Merchant cannot send money");
-        }
-        if(transferRequest.getRecipient() == transferRequest.getSenderId()){
-            throw new IllegalArgumentException("It is not allowed to make a transaction for yourself");
-        }
     }
 
 }

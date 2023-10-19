@@ -21,7 +21,7 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig {
+public class SecurityConfig{
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, HandlerMappingIntrospector introspector) throws Exception {
@@ -31,8 +31,8 @@ public class SecurityConfig {
                 .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
                     auth
-                            .requestMatchers(mvcMatcherBuilder.pattern(HttpMethod.POST, "api/bank/users/register")).permitAll()
-                            .requestMatchers(mvcMatcherBuilder.pattern(HttpMethod.POST, "api/bank/users/login")).permitAll()
+                            .requestMatchers(mvcMatcherBuilder.pattern(HttpMethod.POST, "/api/bank/users/register")).permitAll()
+                            .requestMatchers(mvcMatcherBuilder.pattern(HttpMethod.POST, "/api/bank/users/login")).permitAll()
                             .anyRequest().authenticated();
                 }).build();
     }
