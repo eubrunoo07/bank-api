@@ -100,25 +100,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void validTransferRequest(TransferRequest transferRequest, User sender) {
-        if(sender.getBalance().doubleValue() < transferRequest.getValue().doubleValue()){
-            throw new IllegalArgumentException("Not enough balance for the transfer");
-        }
-        if(transferRequest.getValue().doubleValue() == 0){
-            throw new IllegalArgumentException("The transfer amount cannot be 0");
-        }
-        if(transferRequest.getValue().doubleValue() < 0){
-            throw new IllegalArgumentException("Transactions with negative amounts are not permitted");
-        }
-        if(sender.getRole().toString().equals("MERCHANT")){
-            throw new IllegalArgumentException("Merchant cannot send money");
-        }
-        if(Objects.equals(transferRequest.getRecipient(), transferRequest.getSenderId())){
-            throw new IllegalArgumentException("It is not allowed to make a transaction for yourself");
-        }
-    }
-
-    @Override
     public void updateValidation(UserDTO dto) {
         if(!Objects.equals(UserRole.COMMON_USER.toString(), dto.getRole()) && !Objects.equals(UserRole.MERCHANT.toString(), dto.getRole())){
             throw new IllegalArgumentException("Wrong user type, the types are: MERCHANT or USER_COMMON");

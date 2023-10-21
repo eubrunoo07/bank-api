@@ -33,7 +33,5 @@ public interface UserService {
 
     void validDtoToSave(UserDTO dto);
 
-    void validTransferRequest(TransferRequest transferRequest, User sender);
-
     void updateValidation(UserDTO dto);
 }

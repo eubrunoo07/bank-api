@@ -5,6 +5,7 @@ import com.bruno.api.brbank.dtos.TransferRequest;
 import com.bruno.api.brbank.dtos.UserDTO;
 import com.bruno.api.brbank.entities.User;
 import com.bruno.api.brbank.enums.UserRole;
+import com.bruno.api.brbank.services.TransferService;
 import com.bruno.api.brbank.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,6 +29,7 @@ import java.util.List;
 public class UserController {
     private final AuthenticationManager authManager;
     private final UserService service;
+    private final TransferService transferService;
 
     @Operation(summary = "Realizar o registro de um usuário")
     @ApiResponses(value = {
@@ -64,9 +66,7 @@ public class UserController {
     public ResponseEntity<?> transferMethod(@RequestBody @Valid TransferRequest transferRequest){
         User sender = service.findById(transferRequest.getSenderId()).orElseThrow(() -> new IllegalArgumentException("This sender ID does not exist in our system"));
         User recipient = service.findById(transferRequest.getRecipient()).orElseThrow(() -> new IllegalArgumentException("This recipient ID does not exist in our system"));
-        service.validTransferRequest(transferRequest, sender);
-        sender.setBalance(sender.getBalance().subtract(transferRequest.getValue()));
-        recipient.setBalance(recipient.getBalance().add(transferRequest.getValue()));
+        transferService.createTransfer(transferRequest, sender, recipient);
         service.save(sender);
         service.save(recipient);
         return ResponseEntity.status(HttpStatus.OK).body("Transfer completed successfully");
