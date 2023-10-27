@@ -1,6 +1,8 @@
 package com.bruno.api.brbank.controllers;
 
+import com.bruno.api.brbank.config.TokenService;
 import com.bruno.api.brbank.dtos.AuthenticationDTO;
+import com.bruno.api.brbank.dtos.LoginTokenResponseDTO;
 import com.bruno.api.brbank.dtos.TransferRequest;
 import com.bruno.api.brbank.dtos.UserDTO;
 import com.bruno.api.brbank.entities.User;
@@ -30,6 +32,7 @@ public class UserController {
     private final UserService service;
     private final TransferService transferService;
     private final AuthenticationManager manager;
+    private final TokenService tokenService;
 
     @Operation(summary = "Realizar o registro de um usuário")
     @ApiResponses(value = {
@@ -52,8 +55,8 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody AuthenticationDTO dto){
         var usernamePassword = new UsernamePasswordAuthenticationToken(dto.login(), dto.password());
         var auth = manager.authenticate(usernamePassword);
-
-        return ResponseEntity.status(HttpStatus.OK).body("User logged in successfully");
+        var token = tokenService.generateToken((User) auth.getPrincipal());
+        return ResponseEntity.status(HttpStatus.OK).body(new LoginTokenResponseDTO(token));
     }
 
     @ApiResponses(value = {

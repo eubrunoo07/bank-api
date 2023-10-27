@@ -22,4 +22,10 @@ public class ControllerAdvice {
     public ApiErrors illegalArgumentHandler(IllegalArgumentException e){
         return new ApiErrors(e.getMessage());
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiErrors runtimeExceptionHandler(RuntimeException e){
+        return new ApiErrors(e.getMessage());
+    }
 }
