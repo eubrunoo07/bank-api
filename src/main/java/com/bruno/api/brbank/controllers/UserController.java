@@ -2,9 +2,9 @@ package com.bruno.api.brbank.controllers;
 
 import com.bruno.api.brbank.config.TokenService;
 import com.bruno.api.brbank.dtos.AuthenticationDTO;
-import com.bruno.api.brbank.dtos.LoginTokenResponseDTO;
 import com.bruno.api.brbank.dtos.TransferRequest;
 import com.bruno.api.brbank.dtos.UserDTO;
+import com.bruno.api.brbank.dtos.UserResponseDTO;
 import com.bruno.api.brbank.entities.User;
 import com.bruno.api.brbank.enums.UserRole;
 import com.bruno.api.brbank.services.TransferService;
@@ -22,6 +22,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -53,10 +54,9 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationDTO dto){
-        var usernamePassword = new UsernamePasswordAuthenticationToken(dto.login(), dto.password());
-        var auth = manager.authenticate(usernamePassword);
-        var token = tokenService.generateToken((User) auth.getPrincipal());
-        return ResponseEntity.status(HttpStatus.OK).body(new LoginTokenResponseDTO(token));
+        User user = service.findByEmailAndPassword(dto.login(), dto.password());
+        var token = tokenService.generateToken(user);
+        return ResponseEntity.status(HttpStatus.OK).body("Your token is: " + token);
     }
 
     @ApiResponses(value = {
@@ -133,8 +133,15 @@ public class UserController {
     @Operation(summary = "Realizar a busca de todos os usuário")
     @GetMapping("/")
     @ResponseStatus(HttpStatus.OK)
-    public List<User> allUsers(){
-        return service.findAll();
+    public List<UserResponseDTO> allUsers(){
+        List<User> users = service.findAll();
+        List<UserResponseDTO> responseDTOS = new ArrayList<>();
+        for (User user : users) {
+            UserResponseDTO userResponseDTO = new UserResponseDTO();
+            BeanUtils.copyProperties(user, userResponseDTO);
+            responseDTOS.add(userResponseDTO);
+        }
+        return responseDTOS;
     }
 
     @ApiResponses(value = {
@@ -145,8 +152,12 @@ public class UserController {
     })
     @Operation(summary = "Realizar a busca de um usuário por ID")
     @GetMapping("/{id}")
-    public User getById(@PathVariable Long id){
-        return service.findById(id).orElseThrow(() -> new IllegalArgumentException("User not exists"));
+    public ResponseEntity<UserResponseDTO> getById(@PathVariable Long id){
+        User user = service.findById(id).orElseThrow(() -> new IllegalArgumentException("User not exists"));
+        UserResponseDTO dto = new UserResponseDTO();
+        BeanUtils.copyProperties(user, dto);
+        dto.setRole(String.valueOf(user.getRole()));
+        return ResponseEntity.ok().body(dto);
     }
 
 }

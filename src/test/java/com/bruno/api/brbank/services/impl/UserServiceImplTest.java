@@ -87,7 +87,7 @@ class UserServiceImplTest {
         Assertions.assertEquals(CPF, response.getCpf());
         Assertions.assertEquals(EMAIL, response.getEmail());
         Assertions.assertEquals(PASSWORD, response.getPassword());
-        Assertions.assertEquals(USER_TYPE, response.getType());
+        Assertions.assertEquals(USER_TYPE, response.getRole());
         Assertions.assertEquals(BALANCE, response.getBalance());
     }
 

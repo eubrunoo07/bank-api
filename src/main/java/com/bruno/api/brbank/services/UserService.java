@@ -5,13 +5,14 @@ import com.bruno.api.brbank.dtos.UserDTO;
 import com.bruno.api.brbank.entities.User;
 import com.bruno.api.brbank.enums.UserRole;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public interface UserService {
+public interface UserService extends UserDetailsService {
     User save(User user);
 
     List<User> findAll();
@@ -34,4 +35,6 @@ public interface UserService {
     void validDtoToSave(UserDTO dto);
 
     void updateValidation(UserDTO dto);
+
+    User findByEmailAndPassword(String login, String password);
 }

@@ -2,6 +2,7 @@ package com.bruno.api.brbank.controllers;
 
 import com.bruno.api.brbank.dtos.TransferRequest;
 import com.bruno.api.brbank.dtos.UserDTO;
+import com.bruno.api.brbank.dtos.UserResponseDTO;
 import com.bruno.api.brbank.entities.User;
 import com.bruno.api.brbank.enums.UserRole;
 import com.bruno.api.brbank.services.UserService;
@@ -57,14 +58,14 @@ class UserControllerTest {
     void whenTransferThenReturnSuccess() {
         User sender = new User();
         BeanUtils.copyProperties(user, sender);
-        sender.setType(UserRole.COMMON_USER);
+        sender.setRole(UserRole.COMMON_USER);
 
         User recipient = new User();
         recipient.setName("Wallace Silva");
         recipient.setCpf("45597409093");
         recipient.setEmail("wallace@gmail.com");
         recipient.setPassword("1234");
-        recipient.setType(UserRole.COMMON_USER);
+        recipient.setRole(UserRole.COMMON_USER);
         recipient.setBalance(BigDecimal.valueOf(0));
         recipient.setId(2L);
 
@@ -86,7 +87,7 @@ class UserControllerTest {
     void whenTransferThenReturnAnErrorBecauseInsufficientBalance(){
         User sender = new User();
         BeanUtils.copyProperties(user, sender);
-        sender.setType(UserRole.COMMON_USER);
+        sender.setRole(UserRole.COMMON_USER);
         sender.setBalance(BigDecimal.valueOf(10));
 
         User recipient = new User();
@@ -94,7 +95,7 @@ class UserControllerTest {
         recipient.setCpf("45597409093");
         recipient.setEmail("wallace@gmail.com");
         recipient.setPassword("1234");
-        recipient.setType(UserRole.COMMON_USER);
+        recipient.setRole(UserRole.COMMON_USER);
         recipient.setBalance(BigDecimal.valueOf(0));
         recipient.setId(2L);
 
@@ -125,7 +126,7 @@ class UserControllerTest {
         assertEquals(dto.getName(), user.getName());
         assertEquals(dto.getEmail(), user.getEmail());
         assertEquals(dto.getCpf(), user.getCpf());
-        assertEquals(UserRole.COMMON_USER, user.getType());
+        assertEquals(UserRole.COMMON_USER, user.getRole());
     }
 
     @Test
@@ -174,10 +175,9 @@ class UserControllerTest {
 
         Mockito.when(service.findById(Mockito.anyLong())).thenReturn(Optional.ofNullable(user));
 
-        User response = controller.getById(ID);
-        Assertions.assertNotNull(response);
-        Assertions.assertEquals(User.class, response.getClass());
-        Assertions.assertEquals(ID, response.getId());
+        ResponseEntity<UserResponseDTO> response = controller.getById(ID);
+        Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals(UserResponseDTO.class, response.getBody().getClass());
     }
 
     private void startUser(){

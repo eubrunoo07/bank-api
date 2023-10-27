@@ -3,6 +3,7 @@ package com.bruno.api.brbank.entities;
 import com.bruno.api.brbank.enums.UserRole;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,6 +17,7 @@ import java.util.List;
 @Entity
 @Table(name = "user_tb")
 @Getter@Setter
+@EqualsAndHashCode(of = "id")
 public class User implements UserDetails{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
