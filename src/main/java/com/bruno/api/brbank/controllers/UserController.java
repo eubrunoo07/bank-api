@@ -27,9 +27,9 @@ import java.util.List;
 @CrossOrigin(value = "*")
 @RequiredArgsConstructor
 public class UserController {
-    private final AuthenticationManager authManager;
     private final UserService service;
     private final TransferService transferService;
+    private final AuthenticationManager manager;
 
     @Operation(summary = "Realizar o registro de um usuário")
     @ApiResponses(value = {
@@ -49,9 +49,10 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid AuthenticationDTO authenticationDTO){
-        var usernamePassword = new UsernamePasswordAuthenticationToken(authenticationDTO.getLogin(), authenticationDTO.getPassword());
-        var auth = this.authManager.authenticate(usernamePassword);
+    public ResponseEntity<?> login(@RequestBody AuthenticationDTO dto){
+        var usernamePassword = new UsernamePasswordAuthenticationToken(dto.login(), dto.password());
+        var auth = manager.authenticate(usernamePassword);
+
         return ResponseEntity.status(HttpStatus.OK).body("User logged in successfully");
     }
 
